@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinTrack ✦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="logo">
+        <div class="logo-mark">₹</div>
+        <span class="logo-text">FinTrack</span>
+        
+      </div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-tab="dashboard"><span class="nav-icon">⬡</span><span>Dashboard</span></a>
+        <a class="nav-item" data-tab="transactions"><span class="nav-icon">⇄</span><span>Transactions</span></a>
+        <a class="nav-item" data-tab="reports"><span class="nav-icon">◈</span><span>Reports</span></a>
+        <a class="nav-item" data-tab="goals"><span class="nav-icon">◎</span><span>Goals</span><span class="goals-badge" id="goalsBadge" style="display:none"></span></a>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <div class="theme-row">
+        <span class="theme-label"><span id="themeIcon">🌙</span> <span id="themeLabel">Dark</span></span>
+        <button class="toggle-pill" id="themeToggle" onclick="toggleTheme()"><span class="toggle-knob"></span></button>
+      </div>
+      <button id="logoutBtn" class="logout-btn"><span>⏻</span> Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <div class="topbar">
+      <div><div class="page-title" id="pageTitle">Dashboard</div><div class="page-sub" id="pageDate"></div></div>
+      <div class="topbar-right">
+        <div class="balance-chip"><span class="chip-label">Balance</span><span class="chip-val" id="topBalance">₹0.00</span></div>
+        <button class="action-btn" onclick="exportCSV()">↓ Export</button>
+        <button class="action-btn import-btn" onclick="document.getElementById('importInput').click()">↑ Import</button>
+        <input type="file" id="importInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="tab-content active" id="dashboard">
+      <div class="stat-row">
+        <div class="stat-card teal"><div class="sc-bg"></div><div class="sc-icon">↑</div><div class="sc-body"><div class="sc-label">Total Income</div><div class="sc-val" id="s-income">₹0</div></div></div>
+        <div class="stat-card coral"><div class="sc-bg"></div><div class="sc-icon">↓</div><div class="sc-body"><div class="sc-label">Expenses</div><div class="sc-val" id="s-expense">₹0</div></div></div>
+        <div class="stat-card violet"><div class="sc-bg"></div><div class="sc-icon">⇌</div><div class="sc-body"><div class="sc-label">This Month</div><div class="sc-val" id="s-month">₹0</div></div></div>
+        <div class="stat-card amber"><div class="sc-bg"></div><div class="sc-icon">%</div><div class="sc-body"><div class="sc-label">Savings Rate</div><div class="sc-val" id="s-rate">0%</div></div></div>
+      </div>
+      <div class="dash-grid">
+        <div class="panel panel-tall">
+          <div class="panel-head"><span class="panel-title">Recent Activity</span><button class="ghost-btn" onclick="switchTab('transactions')">View all →</button></div>
+          <div id="recentList"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">This Month</span><span class="tag" id="monthTag"></span></div>
+          <div class="month-trio">
+            <div class="trio-item teal-trio"><div class="trio-val" id="m-inc">₹0</div><div class="trio-lab">In</div></div>
+            <div class="trio-item coral-trio"><div class="trio-val" id="m-exp">₹0</div><div class="trio-lab">Out</div></div>
+            <div class="trio-item violet-trio"><div class="trio-val" id="m-sav">₹0</div><div class="trio-lab">Saved</div></div>
+          </div>
+          <canvas id="dailyChart" style="margin-top:12px;"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Spending Breakdown</span></div>
+          <canvas id="pieChart"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Goals</span><button class="pill-btn" onclick="switchTab('goals')">+ Add</button></div>
+          <div id="dashGoals"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="tab-content" id="transactions">
+      <div class="tx-grid">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">New Transaction</span></div>
+          <form id="transactionForm">
+            <div class="type-toggle-group">
+              <button type="button" class="type-btn" data-type="income" onclick="setType('income',this)"><span>↑</span> Income</button>
+              <button type="button" class="type-btn" data-type="expense" onclick="setType('expense',this)"><span>↓</span> Expense</button>
+            </div>
+            <input type="hidden" id="transactionType" value="">
+            <label>Category</label>
+            <select id="transactionCategory" required><option value="">Select category</option></select>
+            <label>Amount (₹)</label>
+            <div class="amount-wrap"><span class="amount-prefix">₹</span><input type="number" id="transactionAmount" placeholder="0.00" min="0.01" step="0.01" required class="amount-input"></div>
+            <label>Date</label>
+            <input type="date" id="transactionDate" required>
+            <label>Note <span class="opt-tag">optional</span></label>
+            <input type="text" id="transactionDescription" placeholder="What was this for?">
+            <button type="submit" class="submit-btn" id="addTxBtn"><span class="btn-text">Add Transaction</span></button>
+          </form>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">All Transactions</span>
+            <select id="filterType" onchange="renderTransactions()" class="mini-sel"><option value="all">All</option><option value="income">Income</option><option value="expense">Expense</option></select>
+          </div>
+          <div id="allTransactions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="tab-content" id="reports">
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><span class="panel-title">Monthly Trends</span><span class="tag" id="yearTag"></span></div><canvas id="trendsChart"></canvas></div>
+        <div class="panel"><div class="panel-head"><span class="panel-title">Yearly Overview</span></div><canvas id="yearlyChart"></canvas></div>
+      </div>
+      <div class="panel"><div class="panel-head"><span class="panel-title">Category Spending Analysis</span></div><div id="catAnalysis"></div></div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="tab-content" id="goals">
+      <div class="panel goal-form-panel" id="goalFormPanel" style="display:none">
+        <div class="panel-head"><span class="panel-title">New Financial Goal ✦</span><button class="ghost-btn" onclick="toggleGoalForm(false)">✕ Cancel</button></div>
+        <form id="goalForm" class="goal-form-grid">
+          <div class="field-group"><label>Goal Name</label><input type="text" id="goalName" placeholder="e.g. New MacBook, Trip to Goa..." required></div>
+          <div class="field-group"><label>Target Amount (₹)</label><input type="number" id="goalTarget" placeholder="100000" min="1" required></div>
+          <div class="field-group"><label>Target Date</label><input type="date" id="goalDeadline" required></div>
+          <div class="field-group"><label>Already Saved (₹)</label><input type="number" id="goalCurrent" placeholder="0" min="0" value="0"></div>
+          <div class="field-group full"><button type="submit" class="submit-btn">Save Goal ✦</button></div>
+        </form>
+      </div>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><span class="panel-title">Active Goals</span><button class="pill-btn" onclick="toggleGoalForm(true)">+ New Goal</button></div><div id="activeGoals"></div></div>
+        <div class="panel"><div class="panel-head"><span class="panel-title">Completed 🏆</span></div><div id="completedGoals"></div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal" style="display:none" onclick="closeEditModal(event)">
+  <div class="modal">
+    <div class="modal-head"><span class="panel-title">Edit Transaction</span><button class="ghost-btn" onclick="closeEditModal()">✕</button></div>
+    <form id="editForm">
+      <input type="hidden" id="editId">
+      <label>Category</label><select id="editCategory" required></select>
+      <label>Amount (₹)</label><input type="number" id="editAmount" min="0.01" step="0.01" required>
+      <label>Date</label><input type="date" id="editDate" required>
+      <label>Note</label><input type="text" id="editDescription" placeholder="optional">
+      <button type="submit" class="submit-btn" style="margin-top:16px;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = 'auth.html';
+
+const state = { transactions:[], goals:JSON.parse(localStorage.getItem('ft_goals'))||[], theme:localStorage.getItem('ft_theme')||'dark' };
+let charts = {};
+const CATS = { income:['Salary','Freelance','Investment','Bonus','Side Hustle','Gifts','Other'], expense:['Food & Drinks','Transport','Housing','Shopping','Healthcare','Entertainment','Education','Subscriptions','Utilities','Other'] };
+const PALETTE = ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#8b5cf6','#06b6d4','#84cc16','#f97316'];
+const fmt  = n => '₹'+parseFloat(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtD = d => d?new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+const rel  = d => { if(!d)return ''; const diff=Math.ceil((new Date(d)-new Date())/86400000); if(diff<0)return 'Overdue'; if(diff===0)return 'Today!'; if(diff<=7)return diff+'d left'; if(diff<=30)return Math.ceil(diff/7)+'w left'; return Math.ceil(diff/30)+'mo left'; };
+
+document.addEventListener('DOMContentLoaded',()=>{
+  applyTheme(state.theme);
+  document.getElementById('transactionDate').valueAsDate=new Date();
+  document.getElementById('pageDate').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('monthTag').textContent=new Date().toLocaleString('default',{month:'short',year:'numeric'});
+  document.getElementById('yearTag').textContent=String(new Date().getFullYear());
+  setupNav(); setupListeners();
+  loadTransactions().then(renderAll);
+});
+
+function toggleTheme(){state.theme=state.theme==='dark'?'light':'dark';localStorage.setItem('ft_theme',state.theme);applyTheme(state.theme);}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeToggle').classList.toggle('on',t==='light');
+  document.getElementById('themeIcon').textContent=t==='dark'?'🌙':'☀️';
+  document.getElementById('themeLabel').textContent=t==='dark'?'Dark':'Light';
+  if(Object.keys(charts).length)setTimeout(renderAll,50);
+}
+
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;clearTimeout(el._t);el._t=setTimeout(()=>el.className='',3200);}
+
+const PAGE_TITLES={dashboard:'Dashboard',transactions:'Transactions',reports:'Reports',goals:'Goals'};
+function setupNav(){document.querySelectorAll('.nav-item').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));}
+function switchTab(id){
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id===id));
+  document.getElementById('pageTitle').textContent=PAGE_TITLES[id];
+  if(id==='reports')renderReports();
+}
+
+function setupListeners(){
+  document.getElementById('transactionForm').addEventListener('submit',async e=>{e.preventDefault();await addTx();});
+  document.getElementById('goalForm').addEventListener('submit',e=>{e.preventDefault();addGoal();});
+  document.getElementById('editForm').addEventListener('submit',async e=>{e.preventDefault();await saveEdit();});
+  document.getElementById('logoutBtn').addEventListener('click',()=>{localStorage.removeItem('token');window.location.href='auth.html';});
+}
+
+let selectedType='';
+function setType(type,btn){
+  selectedType=type;document.getElementById('transactionType').value=type;
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const sel=document.getElementById('transactionCategory');sel.innerHTML='<option value="">Select category</option>';
+  CATS[type].forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+}
+
+async function loadTransactions(){
+  try{const res=await fetch('/api/transactions',{headers:{Authorization:'Bearer '+token}});
+    if(res.status===401){localStorage.removeItem('token');window.location.href='auth.html';return;}
+    const d=await res.json();state.transactions=Array.isArray(d)?d:[];}catch{state.transactions=[];}
+}
+
+async function addTx(){
+  const type=document.getElementById('transactionType').value;
+  const category=document.getElementById('transactionCategory').value;
+  const amount=document.getElementById('transactionAmount').value;
+  const date=document.getElementById('transactionDate').value;
+  const description=document.getElementById('transactionDescription').value;
+  if(!type){toast('Pick Income or Expense first!','err');return;}
+  if(!category||!amount){toast('Fill in all fields ✗','err');return;}
+  const btn=document.getElementById('addTxBtn');btn.disabled=true;btn.querySelector('.btn-text').textContent='Adding...';
+  try{
+    const res=await fetch('/api/transactions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({type,category,amount,date,description})});
+    if(!res.ok){const d=await res.json();toast(d.message||'Failed ✗','err');return;}
+    await loadTransactions();renderAll();
+    document.getElementById('transactionForm').reset();document.getElementById('transactionDate').valueAsDate=new Date();
+    selectedType='';document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('transactionCategory').innerHTML='<option value="">Select category</option>';
+    toast('Transaction added ✓');
+  }catch{toast('Network error ✗','err');}
+  finally{btn.disabled=false;btn.querySelector('.btn-text').textContent='Add Transaction';}
+}
+
+async function deleteTx(id){if(!confirm('Delete?'))return;try{await fetch('/api/transactions/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});await loadTransactions();renderAll();toast('Deleted ✓');}catch{toast('Error ✗','err');}}
+
+function openEditModal(tx){
+  document.getElementById('editId').value=tx.id;
+  const sel=document.getElementById('editCategory');
+  sel.innerHTML=(CATS[tx.type]||[]).map(c=>`<option value="${c}"${c===tx.category?' selected':''}>${c}</option>`).join('');
+  document.getElementById('editAmount').value=tx.amount;
+  document.getElementById('editDate').value=tx.date?tx.date.split('T')[0]:'';
+  document.getElementById('editDescription').value=tx.description||'';
+  document.getElementById('editModal').style.display='flex';
+}
+function closeEditModal(e){if(!e||e.target===document.getElementById('editModal'))document.getElementById('editModal').style.display='none';}
+async function saveEdit(){
+  const id=document.getElementById('editId').value;
+  const body={category:document.getElementById('editCategory').value,amount:document.getElementById('editAmount').value,date:document.getElementById('editDate').value,description:document.getElementById('editDescription').value};
+  try{const res=await fetch('/api/transactions/'+id,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
+    if(!res.ok){toast('Update failed ✗','err');return;}closeEditModal();await loadTransactions();renderAll();toast('Updated ✓');}catch{toast('Error ✗','err');}
+}
+
+async function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) { toast('CSV is empty ✗', 'err'); return; }
+
+  // Skip header row, parse each line
+  const rows = lines.slice(1);
+  let added = 0, failed = 0;
+
+  for (const line of rows) {
+    // Handle quoted CSV values
+    const cols = line.match(/(".*?"|[^,]+)/g);
+    if (!cols || cols.length < 4) { failed++; continue; }
+    const clean = cols.map(c => c.replace(/^"|"$/g, '').trim());
+    const [date, type, category, amount, description = ''] = clean;
+
+    if (!['income','expense'].includes(type?.toLowerCase())) { failed++; continue; }
+    if (isNaN(parseFloat(amount))) { failed++; continue; }
+
+    try {
+      const res = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ type: type.toLowerCase(), category, amount: parseFloat(amount), date, description })
+      });
+      if (res.ok) added++; else failed++;
+    } catch { failed++; }
+  }
+
+  event.target.value = ''; // reset input
+  await loadTransactions();
+  renderAll();
+  if (failed === 0) toast(`Imported ${added} transactions ✓`);
+  else toast(`Imported ${added}, skipped ${failed}`, added > 0 ? 'ok' : 'err');
+}
+
+function exportCSV(){
+  if(!state.transactions.length){toast('No transactions to export','err');return;}
+  const rows=[['Date','Type','Category','Amount','Description']];
+  state.transactions.forEach(tx=>rows.push([fmtD(tx.date),tx.type,tx.category,tx.amount,tx.description||'']));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='fintrack.csv';a.click();toast('Exported ✓');
+}
+
+function renderAll(){updateStats();renderRecent();renderTransactions();renderDailyChart();renderPie();renderDashGoals();renderGoals();updateGoalsBadge();}
+
+function updateStats(){
+  let inc=0,exp=0,mI=0,mE=0;const now=new Date();
+  state.transactions.forEach(tx=>{const a=parseFloat(tx.amount);const d=new Date(tx.date);const tm=d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();if(tx.type==='income'){inc+=a;if(tm)mI+=a;}else{exp+=a;if(tm)mE+=a;}});
+  document.getElementById('s-income').textContent=fmt(inc);document.getElementById('s-expense').textContent=fmt(exp);
+  const mn=mI-mE;const me=document.getElementById('s-month');me.textContent=fmt(mn);me.className='sc-val '+(mn>=0?'pos':'neg');
+  const r=inc>0?Math.round(((inc-exp)/inc)*100):0;const re=document.getElementById('s-rate');re.textContent=r+'%';re.className='sc-val '+(r>=0?'pos':'neg');
+  const b=inc-exp;const be=document.getElementById('topBalance');be.textContent=fmt(b);be.className='chip-val '+(b>=0?'pos':'neg');
+  document.getElementById('m-inc').textContent=fmt(mI);document.getElementById('m-exp').textContent=fmt(mE);
+  const sv=document.getElementById('m-sav');sv.textContent=fmt(mI-mE);sv.className='trio-val '+(mI-mE<0?'neg':'');
+}
+
+function renderRecent(){
+  const el=document.getElementById('recentList'),list=state.transactions.slice(0,7);
+  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">💸</div><p>No transactions yet</p><small>Add your first one →</small></div>';return;}
+  el.innerHTML=list.map(tx=>`<div class="tx-row"><div class="tx-dot ${tx.type}"></div><div class="tx-body"><span class="tx-cat">${tx.category}</span>${tx.description?`<span class="tx-note">${tx.description}</span>`:''}<span class="tx-date">${fmtD(tx.date)}</span></div><span class="tx-amt ${tx.type==='income'?'pos':'neg'}">${tx.type==='income'?'+':'-'}${fmt(tx.amount)}</span></div>`).join('');
+}
+
+function renderTransactions(){
+  const el=document.getElementById('allTransactions'),f=document.getElementById('filterType').value;
+  const list=f==='all'?state.transactions:state.transactions.filter(t=>t.type===f);
+  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><p>Nothing here</p></div>';return;}
+  el.innerHTML=list.map(tx=>`<div class="tx-row"><div class="tx-dot ${tx.type}"></div><div class="tx-body"><span class="tx-cat">${tx.category}</span>${tx.description?`<span class="tx-note">${tx.description}</span>`:''}<span class="tx-date">${fmtD(tx.date)}</span></div><div class="tx-actions"><span class="tx-amt ${tx.type==='income'?'pos':'neg'}">${tx.type==='income'?'+':'-'}${fmt(tx.amount)}</span><button class="icon-btn edit" onclick='openEditModal(${JSON.stringify(tx)})'>✎</button><button class="icon-btn del" onclick="deleteTx(${tx.id})">✕</button></div></div>`).join('');
+}
+
+function chartOpts(isDark){return{color:isDark?'#94a3b8':'#64748b',grid:isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)'};}
+
+function renderDailyChart(){
+  const now=new Date(),days=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const iA=Array(days).fill(0),eA=Array(days).fill(0);
+  state.transactions.forEach(tx=>{const d=new Date(tx.date);if(d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()){if(tx.type==='income')iA[d.getDate()-1]+=parseFloat(tx.amount);else eA[d.getDate()-1]+=parseFloat(tx.amount);}});
+  if(charts.daily)charts.daily.destroy();
+  const {color,grid}=chartOpts(state.theme==='dark');
+  charts.daily=new Chart(document.getElementById('dailyChart'),{type:'bar',data:{labels:Array.from({length:days},(_,i)=>i+1),datasets:[{label:'Income',data:iA,backgroundColor:'rgba(16,185,129,0.7)',borderRadius:3},{label:'Expenses',data:eA,backgroundColor:'rgba(239,68,68,0.7)',borderRadius:3}]},options:{responsive:true,plugins:{legend:{labels:{color,font:{family:'DM Sans',size:11},boxWidth:10}}},scales:{x:{ticks:{color,font:{size:9}},grid:{color}},y:{ticks:{color,font:{size:9}},grid:{color}}}}});
+}
+
+function renderPie(){
+  const t={};state.transactions.filter(tx=>tx.type==='expense').forEach(tx=>{t[tx.category]=(t[tx.category]||0)+parseFloat(tx.amount);});
+  const labels=Object.keys(t);if(charts.pie)charts.pie.destroy();
+  const isDark=state.theme==='dark';const {color}=chartOpts(isDark);
+  charts.pie=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:labels.length?labels:['No expenses yet'],datasets:[{data:labels.length?Object.values(t):[1],backgroundColor:labels.length?PALETTE:['rgba(128,128,128,0.2)'],borderWidth:2,borderColor:isDark?'#1a1f2e':'#f8fafc'}]},options:{responsive:true,cutout:'60%',plugins:{legend:{position:'right',labels:{color,font:{family:'DM Sans',size:11},boxWidth:10,padding:8}}}}});
+}
+
+function renderReports(){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],yr=new Date().getFullYear();
+  const iA=Array(12).fill(0),eA=Array(12).fill(0);
+  state.transactions.forEach(tx=>{const d=new Date(tx.date);if(d.getFullYear()===yr){if(tx.type==='income')iA[d.getMonth()]+=parseFloat(tx.amount);else eA[d.getMonth()]+=parseFloat(tx.amount);}});
+  const {color,grid}=chartOpts(state.theme==='dark');
+  if(charts.trends)charts.trends.destroy();
+  charts.trends=new Chart(document.getElementById('trendsChart'),{type:'line',data:{labels:months,datasets:[{label:'Income',data:iA,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,fill:true,pointBackgroundColor:'#10b981',pointRadius:4},{label:'Expenses',data:eA,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,0.1)',tension:0.4,fill:true,pointBackgroundColor:'#ef4444',pointRadius:4}]},options:{responsive:true,plugins:{legend:{labels:{color,font:{family:'DM Sans'},boxWidth:12}}},scales:{x:{ticks:{color},grid:{color}},y:{ticks:{color},grid:{color}}}}});
+  let inc=0,exp=0;state.transactions.forEach(tx=>{if(new Date(tx.date).getFullYear()===yr){if(tx.type==='income')inc+=parseFloat(tx.amount);else exp+=parseFloat(tx.amount);}});
+  if(charts.yearly)charts.yearly.destroy();
+  charts.yearly=new Chart(document.getElementById('yearlyChart'),{type:'bar',data:{labels:[String(yr)],datasets:[{label:'Income',data:[inc],backgroundColor:'rgba(16,185,129,0.8)',borderRadius:8},{label:'Expenses',data:[exp],backgroundColor:'rgba(239,68,68,0.8)',borderRadius:8},{label:'Savings',data:[inc-exp],backgroundColor:'rgba(99,102,241,0.8)',borderRadius:8}]},options:{responsive:true,plugins:{legend:{labels:{color,font:{family:'DM Sans'},boxWidth:12}}},scales:{x:{ticks:{color},grid:{color}},y:{ticks:{color},grid:{color}}}}});
+  const tt={};state.transactions.filter(tx=>tx.type==='expense').forEach(tx=>{tt[tx.category]=(tt[tx.category]||0)+parseFloat(tx.amount);});
+  const sorted=Object.entries(tt).sort((a,b)=>b[1]-a[1]);const el=document.getElementById('catAnalysis');
+  if(!sorted.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><p>No expense data yet</p></div>';return;}
+  const max=sorted[0][1];el.innerHTML=sorted.map(([cat,amt],i)=>`<div class="cat-row"><span class="cat-label">${cat}</span><div class="cat-track"><div class="cat-fill" style="width:${(amt/max*100).toFixed(1)}%;background:${PALETTE[i%PALETTE.length]}"></div></div><span class="cat-val">${fmt(amt)}</span></div>`).join('');
+}
+
+function toggleGoalForm(show){const p=document.getElementById('goalFormPanel');p.style.display=show?'block':'none';if(show){p.scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('goalName').focus();}}
+function addGoal(){
+  const name=document.getElementById('goalName').value.trim(),target=parseFloat(document.getElementById('goalTarget').value),current=parseFloat(document.getElementById('goalCurrent').value)||0,deadline=document.getElementById('goalDeadline').value;
+  if(!name||isNaN(target)||!deadline){toast('Fill in all fields ✗','err');return;}
+  state.goals.push({id:Date.now(),name,target,current:Math.min(current,target),deadline});
+  saveGoals();renderGoals();renderDashGoals();updateGoalsBadge();document.getElementById('goalForm').reset();toggleGoalForm(false);toast('Goal added ✓');
+}
+function addToGoal(id){
+  const amt=parseFloat(document.getElementById('gi-'+id).value);if(!amt||amt<=0){toast('Enter valid amount ✗','err');return;}
+  const g=state.goals.find(g=>g.id===id);g.current=Math.min(parseFloat(g.current)+amt,g.target);
+  if(g.current>=g.target)toast('🎉 Goal achieved! noice!');else toast(fmt(amt)+' added ✓');
+  saveGoals();renderGoals();renderDashGoals();updateGoalsBadge();
+}
+function deleteGoal(id){if(!confirm('Delete?'))return;state.goals=state.goals.filter(g=>g.id!==id);saveGoals();renderGoals();renderDashGoals();updateGoalsBadge();toast('Deleted ✓');}
+function saveGoals(){localStorage.setItem('ft_goals',JSON.stringify(state.goals));}
+function updateGoalsBadge(){const n=state.goals.filter(g=>g.current<g.target).length;const b=document.getElementById('goalsBadge');if(n>0){b.textContent=n;b.style.display='flex';}else b.style.display='none';}
+
+function goalCard(g,showAdd){
+  const pct=Math.min(g.current/g.target*100,100).toFixed(1),done=parseFloat(pct)>=100,r=rel(g.deadline);
+  return `<div class="goal-card${done?' done':''}"><div class="goal-top"><span class="goal-name">${g.name}</span><div style="display:flex;gap:6px;align-items:center;">${r?`<span class="rel-tag${r==='Overdue'?' overdue':''}">${r}</span>`:''}<button class="icon-btn del" onclick="deleteGoal(${g.id})">✕</button></div></div><div class="goal-amounts">${fmt(g.current)} <span class="of-txt">of</span> ${fmt(g.target)}</div><div class="prog-track"><div class="prog-bar" style="width:${pct}%"></div></div><div class="goal-foot"><span class="pct-tag">${pct}%</span><span class="goal-date">${fmtD(g.deadline)}</span></div>${showAdd&&!done?`<div class="goal-add-row"><input type="number" id="gi-${g.id}" placeholder="Add ₹" min="0.01" step="0.01"><button onclick="addToGoal(${g.id})">+ Add</button></div>`:''}${done?'<div class="done-badge">✓ Achieved!</div>':''}</div>`;
+}
+function renderGoals(){
+  const a=state.goals.filter(g=>parseFloat(g.current)<parseFloat(g.target)),d=state.goals.filter(g=>parseFloat(g.current)>=parseFloat(g.target));
+  document.getElementById('activeGoals').innerHTML=a.length?a.map(g=>goalCard(g,true)).join(''):'<div class="empty-state"><div class="empty-icon">🎯</div><p>No active goals</p><small>Hit "+ New Goal" to start</small></div>';
+  document.getElementById('completedGoals').innerHTML=d.length?d.map(g=>goalCard(g,false)).join(''):'<div class="empty-state"><div class="empty-icon">🏆</div><p>Nothing completed yet</p><small>You got this!</small></div>';
+}
+function renderDashGoals(){
+  const el=document.getElementById('dashGoals');if(!state.goals.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">🎯</div><p>No goals set</p><small>Click "+ Add" to start</small></div>';return;}
+  el.innerHTML=state.goals.slice(0,3).map(g=>{const pct=Math.min(g.current/g.target*100,100).toFixed(1);return `<div class="dash-goal"><div class="dg-top"><span class="goal-name">${g.name}</span><span class="pct-tag">${pct}%</span></div><div class="prog-track"><div class="prog-bar" style="width:${pct}%"></div></div><span class="of-txt" style="font-size:11px;">${fmt(g.current)} of ${fmt(g.target)}</span></div>`;}).join('');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrack ✦</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script>
+    // Apply saved theme immediately to avoid flash
+    const t = localStorage.getItem('ft_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  </script>
+</head>
+<body class="auth-page">
+  <div class="auth-container">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#6366f1,#ec4899);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:900;color:white;margin-bottom:14px;box-shadow:0 8px 24px rgba(99,102,241,0.5);">₹</div>
+      <h2 id="authTitle" style="font-family:'Space Grotesk',sans-serif;">Welcome back</h2>
+      <p style="color:var(--text2);font-size:13px;margin-top:6px;" id="authSub">Sign in to your account</p>
+    </div>
+    <form id="authForm">
+      <input type="text" id="name" placeholder="Full Name" class="hidden">
+      <input type="email" id="email" placeholder="Email address" required autocomplete="email">
+      <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+      <button type="submit" id="submitBtn">Sign in →</button>
+    </form>
+    <div id="authMsg"></div>
+    <a href="#" id="toggleAuth" style="font-weight:600;">Need an account? Register for free</a>
+  </div>
+  <script src="/auth-logic.js"></script>
+</body>
+</html>
